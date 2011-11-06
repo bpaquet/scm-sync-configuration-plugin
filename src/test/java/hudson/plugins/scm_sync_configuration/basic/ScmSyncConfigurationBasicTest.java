@@ -5,11 +5,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
-
-import java.io.File;
-
+import static org.junit.Assert.assertTrue;
 import hudson.model.Hudson;
 import hudson.plugins.scm_sync_configuration.util.ScmSyncConfigurationBaseTest;
+
+import java.io.File;
 
 import org.junit.Test;
 
@@ -29,6 +29,6 @@ public class ScmSyncConfigurationBasicTest extends ScmSyncConfigurationBaseTest 
 		Hudson hudsonInstance = Hudson.getInstance();
 		File hudsonRootDir = hudsonInstance.getRootDir();
 		assertThat(hudsonRootDir, is(not(equalTo(null))));
-		assert hudsonRootDir.exists();
+		assertTrue(hudsonRootDir.exists());
 	}
 }

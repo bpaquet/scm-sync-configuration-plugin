@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 import hudson.model.Item;
 import hudson.model.Saveable;
 import hudson.model.Hudson;
+import hudson.model.Job;
 import hudson.plugins.scm_sync_configuration.SCMManipulator;
 import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationBusiness;
 import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationPlugin;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertFalse;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -51,7 +53,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
 		
 		// Renaming fakeJob to newFakeJob
-		Item mockedItem = Mockito.mock(Item.class);
+		Item mockedItem = Mockito.mock(Job.class);
 		File mockedItemRootDir = new File(getCurrentHudsonRootDirectory() + "/jobs/newFakeJob/" );
 		when(mockedItem.getRootDir()).thenReturn(mockedItemRootDir);
 		
@@ -91,8 +93,8 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 		sscItemListener.onRenamed(mockedItem, "fakeJob", "newFakeJob");
 		
 		// Assert no hello file is present in current hudson root
-		assert !new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists();
-		assert !new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists();
+		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists());
+		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists());
 	}
 	
 	@Test
@@ -106,7 +108,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
 		
 		// Deleting fakeJob
-		Item mockedItem = Mockito.mock(Item.class);
+		Item mockedItem = Mockito.mock(Job.class);
 		File mockedItemRootDir = new File(getCurrentHudsonRootDirectory() + "/jobs/fakeJob/" );
 		when(mockedItem.getRootDir()).thenReturn(mockedItemRootDir);
 		
@@ -146,7 +148,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 		sscItemListener.onDeleted(mockedItem);
 		
 		// Assert no hello file is present in current hudson root
-		assert !new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists();
-		assert !new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists();
+		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists());
+		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists());
 	}
 }

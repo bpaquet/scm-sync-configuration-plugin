@@ -13,19 +13,26 @@ import hudson.plugins.scm_sync_configuration.model.ScmContext;
 import hudson.plugins.scm_sync_configuration.scms.SCM;
 import hudson.plugins.scm_sync_configuration.scms.SCMCredentialConfiguration;
 import hudson.plugins.scm_sync_configuration.scms.ScmSyncSubversionSCM;
+import hudson.plugins.scm_sync_configuration.xstream.migration.DefaultSSCPOJO;
+import hudson.plugins.scm_sync_configuration.xstream.migration.ScmSyncConfigurationPOJO;
 import hudson.plugins.test.utils.DirectoryUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
+import static org.junit.Assert.assertTrue;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -72,7 +79,7 @@ public class ScmSyncConfigurationBaseTest {
 		curentLocalSvnRepository = new File(currentTestDirectory.getAbsolutePath()+"/svnLocalRepo/");
 	    if(!(curentLocalSvnRepository.mkdir())) { throw new IOException("Could not create SVN local repo directory: " + curentLocalSvnRepository.getAbsolutePath()); }
 	    FileUtils.copyDirectoryStructure(new ClassPathResource("svnEmptyRepository").getFile(), curentLocalSvnRepository);
-
+	    
 	    // Mocking user
 	    User mockedUser = Mockito.mock(User.class);
 	    when(mockedUser.getId()).thenReturn("fcamblor");
@@ -117,6 +124,12 @@ public class ScmSyncConfigurationBaseTest {
 			PowerMockito.doReturn(mockedCredential).when(mockedSCM).extractScmCredentials((String)Mockito.notNull());
 		}
 		
+		ScmSyncConfigurationPOJO config = new DefaultSSCPOJO();
+		config.setScm(mockedSCM);
+		config.setScmRepositoryUrl(getSCMRepositoryURL());
+		ScmSyncConfigurationPlugin.getInstance().loadData(config);
+		ScmSyncConfigurationPlugin.getInstance().init();
+		
 		return mockedSCM;
 	}
 
@@ -126,7 +139,7 @@ public class ScmSyncConfigurationBaseTest {
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		SCMManipulator scmManipulator = new SCMManipulator(SCMManagerFactory.getInstance().createScmManager());
 		boolean configSettledUp = scmManipulator.scmConfigurationSettledUp(scmContext, true);
-		assert configSettledUp;
+		assertTrue(configSettledUp);
 		
 		return scmManipulator;
 	}
@@ -142,7 +155,7 @@ public class ScmSyncConfigurationBaseTest {
 		
 		FileUtils.deleteDirectory(checkoutDirectoryForVerifications);
 		
-		assert directoryContentsAreEqual;
+		Assert.assertTrue(directoryContentsAreEqual);
 	}
 	
 	// Overridable in a near future (when dealing with multiple scms ...)
@@ -151,8 +164,11 @@ public class ScmSyncConfigurationBaseTest {
 	}
 	
 	// Overridable in a near future (when dealing with multiple scms ...)
-	protected Pattern getSpecialSCMDirectoryExcludePattern(){
-		return Pattern.compile("\\.svn");
+	protected List<Pattern> getSpecialSCMDirectoryExcludePattern(){
+		return new ArrayList<Pattern>(){{
+			add(Pattern.compile("\\.svn"));
+			add(Pattern.compile("\\.git.*"));
+		}};
 	}
 
 	// Overridable in a near future (when dealing with multiple scms ...)
