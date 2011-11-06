@@ -12,6 +12,9 @@ import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationPlugin;
 import hudson.plugins.scm_sync_configuration.extensions.ScmSyncConfigurationItemListener;
 import hudson.plugins.scm_sync_configuration.model.ScmContext;
 import hudson.plugins.scm_sync_configuration.scms.SCM;
+import hudson.plugins.scm_sync_configuration.strategies.ScmSyncStrategy;
+import hudson.plugins.scm_sync_configuration.strategies.impl.JenkinsConfigScmSyncStrategy;
+import hudson.plugins.scm_sync_configuration.strategies.impl.JobConfigScmSyncStrategy;
 import hudson.plugins.scm_sync_configuration.util.ScmSyncConfigurationPluginBaseTest;
 
 import java.io.File;
@@ -21,6 +24,9 @@ import org.codehaus.plexus.util.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -150,5 +156,31 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 		// Assert no hello file is present in current hudson root
 		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists());
 		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists());
+	}
+
+	private void assertStrategy(Class<?> clazz, Saveable object, String relativePath) {
+		ScmSyncStrategy strategy = ScmSyncConfigurationPlugin.getInstance().getStrategyForSaveable(object, new File(getCurrentHudsonRootDirectory() + File.separator + relativePath));
+		if (clazz == null) {
+			assertNull(strategy);
+		}
+		else {
+			assertNotNull(strategy);
+			assertEquals(clazz, strategy.getClass());
+		}
+	}
+	
+	@Test
+	public void shouldFileWhichHaveToBeInSCM() throws Throwable {
+		assertStrategy(JenkinsConfigScmSyncStrategy.class, Mockito.mock(Saveable.class), "config.xml");
+		assertStrategy(JenkinsConfigScmSyncStrategy.class, Mockito.mock(Saveable.class), "hudson.scm.SubversionSCM.xml");
+		assertStrategy(null, Mockito.mock(Saveable.class), "hudson.config.xml2");
+		assertStrategy(null, Mockito.mock(Saveable.class), "nodeMonitors.xml");
+		assertStrategy(null, Mockito.mock(Saveable.class), "toto" + File.separator + "hudson.config.xml");
+		
+		assertStrategy(null, Mockito.mock(Job.class), "toto" + File.separator + "config.xml");
+		assertStrategy(null, Mockito.mock(Job.class), "jobs" + File.separator + "config.xml");
+		assertStrategy(null, Mockito.mock(Saveable.class), "jobs" + File.separator + "myJob" + File.separator + "config.xml");
+		assertStrategy(JobConfigScmSyncStrategy.class, Mockito.mock(Job.class), "jobs" + File.separator + "myJob" + File.separator + "config.xml");
+		assertStrategy(null, Mockito.mock(Job.class), "jobs" + File.separator + "myJob" + File.separator + "config2.xml");
 	}
 }
