@@ -69,6 +69,9 @@ public class ScmSyncConfigurationXStreamConverter implements Converter {
 			writer.setValue(plugin.getScmRepositoryUrl());
 			writer.endNode();
 		}
+		writer.startNode(AbstractMigrator.SCM_NO_USER_COMMIT_MESSAGE);
+		writer.setValue(Boolean.toString(plugin.isNoUserCommitMessage()));
+		writer.endNode();
 	}
 	
 	/**

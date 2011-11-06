@@ -23,6 +23,7 @@ import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.AccessDeniedException;
+import org.jinterop.dcom.test.SysInfoEvents;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -37,6 +38,7 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 	transient private ScmSyncConfigurationBusiness business;
 	private String scmRepositoryUrl;
 	private SCM scm;
+	private boolean noUserCommitMessage;
 
 	public ScmSyncConfigurationPlugin(){
 		setBusiness(new ScmSyncConfigurationBusiness());
@@ -66,6 +68,7 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 	public void loadData(ScmSyncConfigurationPOJO pojo){
 		this.scmRepositoryUrl = pojo.getScmRepositoryUrl();
 		this.scm = pojo.getScm();
+		this.noUserCommitMessage = pojo.isNoUserCommitMessage();
 	}
 	
 	public void init() {
@@ -89,6 +92,8 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		
 		String scmType = req.getParameter("scm");
 		if(scmType != null){
+			this.noUserCommitMessage = formData.containsKey("noUserCommitMessage");
+			
 			this.scm = SCM.valueOf(scmType);
 			String newScmRepositoryUrl = this.scm.createScmUrlFromRequest(req);
 			
@@ -174,10 +179,11 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		ScmSyncConfigurationDataProvider.retrieveComment(Stapler.getCurrentRequest(), true);
 		
 		// Displaying commit message popup is based on following tests :
+		// Zero : never ask for a commit message
 		// First : no botherTimeout should match with current url
 		// Second : a strategy should exist, matching current url
 		// Third : SCM Sync should be settled up
-		return ScmSyncConfigurationDataProvider.retrieveBotherTimeoutMatchingUrl(Stapler.getCurrentRequest(), url) == null
+		return !noUserCommitMessage && ScmSyncConfigurationDataProvider.retrieveBotherTimeoutMatchingUrl(Stapler.getCurrentRequest(), url) == null
 					&& getStrategyForURL(url) != null && this.business.scmCheckoutDirectorySettledUp(createScmContext());
 	}
 	
@@ -189,6 +195,10 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		}
 		// Strategy not found !
 		return null;
+	}
+	
+	public boolean isNoUserCommitMessage() {
+		return noUserCommitMessage;
 	}
 	
 	public SCM[] getScms(){
