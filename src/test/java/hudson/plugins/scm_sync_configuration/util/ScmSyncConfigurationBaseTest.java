@@ -1,6 +1,7 @@
 package hudson.plugins.scm_sync_configuration.util;
 
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import hudson.Plugin;
@@ -30,7 +31,6 @@ import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -145,7 +145,7 @@ public abstract class ScmSyncConfigurationBaseTest {
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		SCMManipulator scmManipulator = new SCMManipulator(SCMManagerFactory.getInstance().createScmManager());
 		boolean configSettledUp = scmManipulator.scmConfigurationSettledUp(scmContext, true);
-		assertTrue(configSettledUp);
+		assertThat(configSettledUp, is(true));
 		
 		return scmManipulator;
 	}
@@ -161,7 +161,7 @@ public abstract class ScmSyncConfigurationBaseTest {
 		
 		FileUtils.deleteDirectory(checkoutDirectoryForVerifications);
 		
-		Assert.assertTrue(directoryContentsAreEqual);
+		assertThat(directoryContentsAreEqual, is(true));
 	}
 	
 	// Overridable in a near future (when dealing with multiple scms ...)

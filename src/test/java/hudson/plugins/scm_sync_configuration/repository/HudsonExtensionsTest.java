@@ -1,9 +1,10 @@
 package hudson.plugins.scm_sync_configuration.repository;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import hudson.model.Item;
@@ -104,8 +105,8 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		sscItemListener.onRenamed(mockedItem, "fakeJob", "newFakeJob");
 		
 		// Assert no hello file is present in current hudson root
-		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists());
-		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists());
+		assertThat(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists(), is(false));
+		assertThat(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists(), is(false));
 	}
 	
 	@Test
@@ -159,18 +160,18 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		sscItemListener.onDeleted(mockedItem);
 		
 		// Assert no hello file is present in current hudson root
-		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists());
-		assertFalse(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists());
+		assertThat(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists(), is(false));
+		assertThat(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists(), is(false));
 	}
 
-	private void assertStrategy(Class<?> clazz, Saveable object, String relativePath) {
+	private void assertStrategy(Class<? extends ScmSyncStrategy> clazz, Saveable object, String relativePath) {
 		ScmSyncStrategy strategy = ScmSyncConfigurationPlugin.getInstance().getStrategyForSaveable(object, new File(getCurrentHudsonRootDirectory() + File.separator + relativePath));
 		if (clazz == null) {
-			assertNull(strategy);
+			assertThat(strategy, nullValue());
 		}
 		else {
-			assertNotNull(strategy);
-			assertEquals(clazz, strategy.getClass());
+			assertThat(strategy, notNullValue());
+			assertThat(strategy, instanceOf(clazz));
 		}
 	}
 	
