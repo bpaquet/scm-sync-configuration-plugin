@@ -4,23 +4,23 @@ import hudson.plugins.scm_sync_configuration.model.ScmContext;
 import hudson.plugins.scm_sync_configuration.scms.SCM;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.scm.ScmException;
 import org.apache.maven.scm.ScmFileSet;
 import org.apache.maven.scm.command.add.AddScmResult;
 import org.apache.maven.scm.command.checkin.CheckInScmResult;
 import org.apache.maven.scm.command.checkout.CheckOutScmResult;
-import org.apache.maven.scm.command.export.ExportScmResult;
 import org.apache.maven.scm.command.remove.RemoveScmResult;
 import org.apache.maven.scm.command.update.UpdateScmResult;
 import org.apache.maven.scm.manager.ScmManager;
 import org.apache.maven.scm.repository.ScmRepository;
-import org.codehaus.plexus.util.FileUtils;
 
 /**
  * Class providing atomic scm commands and wrapping calls to maven scm api
@@ -169,12 +169,16 @@ public class SCMManipulator {
 		File oldDir = new File(scmRoot.getAbsoluteFile()+File.separator+oldDirPathRelativeToScmRoot);
 		
 		try {
-			if(!newDir.mkdir()){
-				LOGGER.severe("[renameHierarchy] Failed to create ["+newDir.getAbsolutePath()+"] !");
-				return renameOk;
+			final String filter = scmManager.getProviderByRepository(scmRepository).getScmSpecificFilename();
+			try {
+				FileUtils.copyDirectory(oldDir, newDir, new FileFilter() {
+					public boolean accept(File pathname) {
+						return !pathname.getAbsolutePath().endsWith(filter);
+					}
+				});
 			}
-			if(!export(oldDirPathRelativeToScmRoot, newDir)){
-				LOGGER.severe("[renameHierarchy] Failed to export ["+oldDirPathRelativeToScmRoot+"] !");
+			catch(IOException e) {
+				LOGGER.severe("[renameHierarchy] Unable to copye ["+oldDirPathRelativeToScmRoot+"] to ["+newDirPathRelativeToScmRoot+"] :" + e.getMessage());;
 				return renameOk;
 			}
 			ScmFileSet addFileset = new ScmFileSet(scmRoot, new File(newDirPathRelativeToScmRoot));
@@ -215,55 +219,7 @@ public class SCMManipulator {
 		
 		return renameOk;
 	}
-	
-	public boolean export(String syncedHierarchyPathRelativeToScmRoot, File outputDirectory){
-		boolean exportOk = false;
 		
-		if(!expectScmRepositoryInitiated()){
-			return exportOk;
-		}
-		
-		LOGGER.fine("Exporting SCM directory ["+syncedHierarchyPathRelativeToScmRoot+"] to ["+outputDirectory.getAbsolutePath()+"] ...");
-		
-		File tmpDir;
-		try {
-			tmpDir = createTmpDir();
-		} catch (IOException e) {
-			LOGGER.throwing(this.getClass().getName(), "createTmpDir", e);
-			LOGGER.severe("[export] Error creating tmp directory : "+e.getMessage());
-			return exportOk;
-		}
-		
-		try {
-			ExportScmResult result = this.scmManager.export(this.scmRepository, new ScmFileSet(tmpDir));
-			if(!result.isSuccess()){
-				LOGGER.severe("[export] Error exporting directory structure : "+result.getProviderMessage());
-				return exportOk;
-			}
-			FileUtils.copyDirectoryStructure(new File(tmpDir.getAbsolutePath()+File.separator+syncedHierarchyPathRelativeToScmRoot), outputDirectory);
-			exportOk = true;
-		}catch(IOException e){
-			LOGGER.throwing(FileUtils.class.getName(), "copyDirectoryStructure", e);
-			LOGGER.severe("[export] Error copying directory structure : "+e.getMessage());
-			return exportOk;
-		}catch(ScmException e){
-			LOGGER.throwing(this.scmManager.getClass().getName(), "export", e);
-			LOGGER.severe("[export] Error exporting directory structure : "+e.getMessage());
-			return exportOk;
-		}finally {
-			// Deleting tmp directory..
-			if(!tmpDir.delete()){
-				LOGGER.warning("[export] Failed to delete tmp directory !");
-			}
-		}
-
-		if(exportOk){
-			LOGGER.fine("Exported SCM directory ["+syncedHierarchyPathRelativeToScmRoot+"] to ["+outputDirectory.getAbsolutePath()+"] !");
-		}
-		
-		return exportOk;
-	}
-	
 	public List<File> addFile(File scmRoot, String filePathRelativeToScmRoot){
 		List<File> synchronizedFiles = new ArrayList<File>();
 		
