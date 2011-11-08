@@ -8,6 +8,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import hudson.model.Hudson;
 import hudson.plugins.scm_sync_configuration.util.ScmSyncConfigurationBaseTest;
+import hudson.plugins.test.utils.scms.ScmUnderTestSubversion;
 
 import java.io.File;
 
@@ -15,9 +16,12 @@ import org.junit.Test;
 
 public class ScmSyncConfigurationBasicTest extends ScmSyncConfigurationBaseTest {
 
+	public ScmSyncConfigurationBasicTest() {
+		super(new ScmUnderTestSubversion());
+	}
+	
 	@Test
 	public void shouldRetrieveMockedHudsonInstanceCorrectly() throws Throwable {
-		
 		Hudson hudsonInstance = Hudson.getInstance();
 		assertThat(hudsonInstance, is(notNullValue()));
 		assertThat(hudsonInstance.toString().split("@")[0], is(not(equalTo("hudson.model.Hudson"))));

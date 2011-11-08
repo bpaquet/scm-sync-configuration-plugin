@@ -1,5 +1,6 @@
 package hudson.plugins.scm_sync_configuration.util;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import hudson.Plugin;
@@ -16,12 +17,12 @@ import hudson.plugins.scm_sync_configuration.scms.ScmSyncSubversionSCM;
 import hudson.plugins.scm_sync_configuration.xstream.migration.DefaultSSCPOJO;
 import hudson.plugins.scm_sync_configuration.xstream.migration.ScmSyncConfigurationPOJO;
 import hudson.plugins.test.utils.DirectoryUtils;
+import hudson.plugins.test.utils.scms.ScmUnderTest;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -32,7 +33,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
-import static org.junit.Assert.assertTrue;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -44,13 +44,19 @@ import org.springframework.core.io.ClassPathResource;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Hudson.class, SCM.class, ScmSyncSubversionSCM.class, PluginWrapper.class})
-public class ScmSyncConfigurationBaseTest {
+public abstract class ScmSyncConfigurationBaseTest {
 	
 	@Rule protected TestName testName = new TestName();
 	private File currentTestDirectory = null;
-	private File curentLocalSvnRepository = null;
+	private File curentLocalRepository = null;
 	private File currentHudsonRootDirectory = null;
-
+	
+	private ScmUnderTest scmUnderTest;
+	
+	protected ScmSyncConfigurationBaseTest(ScmUnderTest scmUnderTest) {
+		this.scmUnderTest = scmUnderTest;
+	}
+	
 	@Before
 	public void setup() throws Throwable {
 		// Instantiating ScmSyncConfigurationPlugin instance
@@ -75,10 +81,10 @@ public class ScmSyncConfigurationBaseTest {
         //EnvVars env = Computer.currentComputer().getEnvironment();
         //env.put("HUDSON_HOME", tmpHudsonRoot.getPath() );
 
-		// Creating local SVN repository...
-		curentLocalSvnRepository = new File(currentTestDirectory.getAbsolutePath()+"/svnLocalRepo/");
-	    if(!(curentLocalSvnRepository.mkdir())) { throw new IOException("Could not create SVN local repo directory: " + curentLocalSvnRepository.getAbsolutePath()); }
-	    FileUtils.copyDirectoryStructure(new ClassPathResource("svnEmptyRepository").getFile(), curentLocalSvnRepository);
+		// Creating local repository...
+		curentLocalRepository = new File(currentTestDirectory.getAbsolutePath()+"/localRepo/");
+	    if(!(curentLocalRepository.mkdir())) { throw new IOException("Could not create local repo directory: " + curentLocalRepository.getAbsolutePath()); }
+	    scmUnderTest.initRepo(curentLocalRepository);
 	    
 	    // Mocking user
 	    User mockedUser = Mockito.mock(User.class);
@@ -115,11 +121,11 @@ public class ScmSyncConfigurationBaseTest {
 	    return (temp);
 	}
 	
-	protected SCM createSCMMock(boolean withCredentials){
+	protected SCM createSCMMock(){
 		
 		SCM mockedSCM = spy(SCM.valueOf(getSCMClass().getName()));
 		
-		if(withCredentials){
+		if(scmUnderTest.useCredentials()){
 			SCMCredentialConfiguration mockedCredential = new SCMCredentialConfiguration("toto");
 			PowerMockito.doReturn(mockedCredential).when(mockedSCM).extractScmCredentials((String)Mockito.notNull());
 		}
@@ -135,7 +141,7 @@ public class ScmSyncConfigurationBaseTest {
 
 	protected SCMManipulator createMockedScmManipulator() throws ComponentLookupException, PlexusContainerException{
 		// Settling up scm context
-		SCM mockedSCM = createSCMMock(true);
+		SCM mockedSCM = createSCMMock();
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		SCMManipulator scmManipulator = new SCMManipulator(SCMManagerFactory.getInstance().createScmManager());
 		boolean configSettledUp = scmManipulator.scmConfigurationSettledUp(scmContext, true);
@@ -160,10 +166,9 @@ public class ScmSyncConfigurationBaseTest {
 	
 	// Overridable in a near future (when dealing with multiple scms ...)
 	protected String getSCMRepositoryURL(){
-		return "scm:svn:file:///"+this.getCurentLocalSvnRepository().getAbsolutePath();
+		return scmUnderTest.createUrl(this.getCurentLocalRepository().getAbsolutePath());
 	}
 	
-	// Overridable in a near future (when dealing with multiple scms ...)
 	protected List<Pattern> getSpecialSCMDirectoryExcludePattern(){
 		return new ArrayList<Pattern>(){{
 			add(Pattern.compile("\\.svn"));
@@ -173,15 +178,15 @@ public class ScmSyncConfigurationBaseTest {
 
 	// Overridable in a near future (when dealing with multiple scms ...)
 	protected Class<? extends SCM> getSCMClass(){
-		return ScmSyncSubversionSCM.class;
+		return scmUnderTest.getClazz();
 	}
 	
 	protected File getCurrentTestDirectory() {
 		return currentTestDirectory;
 	}
 
-	protected File getCurentLocalSvnRepository() {
-		return curentLocalSvnRepository;
+	protected File getCurentLocalRepository() {
+		return curentLocalRepository;
 	}
 
 	public File getCurrentHudsonRootDirectory() {

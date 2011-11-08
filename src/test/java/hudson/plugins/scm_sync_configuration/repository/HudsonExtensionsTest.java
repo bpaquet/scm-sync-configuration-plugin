@@ -1,5 +1,9 @@
 package hudson.plugins.scm_sync_configuration.repository;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import hudson.model.Item;
@@ -16,6 +20,7 @@ import hudson.plugins.scm_sync_configuration.strategies.ScmSyncStrategy;
 import hudson.plugins.scm_sync_configuration.strategies.impl.JenkinsConfigScmSyncStrategy;
 import hudson.plugins.scm_sync_configuration.strategies.impl.JobConfigScmSyncStrategy;
 import hudson.plugins.scm_sync_configuration.util.ScmSyncConfigurationPluginBaseTest;
+import hudson.plugins.test.utils.scms.ScmUnderTest;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,20 +28,20 @@ import java.util.ArrayList;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 @PrepareForTest(ScmSyncConfigurationPlugin.class)
-public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
+public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 
 	private ScmSyncConfigurationBusiness sscBusiness;
 	private ScmSyncConfigurationItemListener sscItemListener;
 	
+	protected HudsonExtensionsTest(ScmUnderTest scmUnderTest) {
+		super(scmUnderTest);
+	}
+
 	@Before
 	public void initObjectsUnderTests() throws Throwable{
 		this.sscBusiness = new ScmSyncConfigurationBusiness();
@@ -51,7 +56,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 	@Test
 	public void shouldJobRenameBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock(true);
+		SCM mockedSCM = createSCMMock();
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		sscBusiness.init(scmContext);
 		
@@ -71,7 +76,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 	@Test
 	public void shouldJobRenameDoesntPerformAnyScmUpdate() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock(true);
+		SCM mockedSCM = createSCMMock();
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		sscBusiness.init(scmContext);
 		
@@ -106,7 +111,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 	@Test
 	public void shouldJobDeleteBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock(true);
+		SCM mockedSCM = createSCMMock();
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		sscBusiness.init(scmContext);
 		
@@ -126,7 +131,7 @@ public class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 	@Test
 	public void shouldJobDeleteDoesntPerformAnyScmUpdate() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock(true);
+		SCM mockedSCM = createSCMMock();
 		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		sscBusiness.init(scmContext);
 		
