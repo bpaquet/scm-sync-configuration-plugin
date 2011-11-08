@@ -102,11 +102,38 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
 		
-		Item mockedItem2 = Mockito.mock(Job.class);
-		when(mockedItem2.getRootDir()).thenReturn(configFile);
-		sscConfigurationSaveableListener.onChange(mockedItem2, new XmlFile(configFile));
+		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
 		
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobAddBeCorrectlyImpactedOnSCM/");
+	}
+	
+	@Test
+	public void shouldJobModificationBeCorrectlyImpactedOnSCM() throws Throwable {
+		// Initializing the repository...
+		SCM mockedSCM = createSCMMock();
+		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
+		sscBusiness.init(scmContext);
+		
+		// Synchronizing hudson config files
+		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
+		
+		File jobDirectory = new File(getCurrentHudsonRootDirectory() + "/jobs/fakeJob/" );
+		File configFile = new File(jobDirectory.getAbsolutePath() + File.separator + "config.xml");
+		
+		// Creating fake new job
+		Item mockedItem = Mockito.mock(Job.class);
+		when(mockedItem.getRootDir()).thenReturn(jobDirectory);
+		
+		sscItemListener.onCreated(mockedItem);
+		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
+		
+		FileUtils.copyFile(new ClassPathResource("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobModificationBeCorrectlyImpactedOnSCM/jobs/fakeJob/config.xml").getFile(), configFile);
+		
+		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobModificationBeCorrectlyImpactedOnSCM/");
 	}
 
 	@Test
