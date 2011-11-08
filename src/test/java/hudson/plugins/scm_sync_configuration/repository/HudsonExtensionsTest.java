@@ -7,6 +7,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import hudson.XmlFile;
 import hudson.model.Item;
 import hudson.model.Saveable;
 import hudson.model.Hudson;
@@ -15,6 +16,7 @@ import hudson.plugins.scm_sync_configuration.SCMManipulator;
 import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationBusiness;
 import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationPlugin;
 import hudson.plugins.scm_sync_configuration.extensions.ScmSyncConfigurationItemListener;
+import hudson.plugins.scm_sync_configuration.extensions.ScmSyncConfigurationSaveableListener;
 import hudson.plugins.scm_sync_configuration.model.ScmContext;
 import hudson.plugins.scm_sync_configuration.scms.SCM;
 import hudson.plugins.scm_sync_configuration.strategies.ScmSyncStrategy;
@@ -32,12 +34,14 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.springframework.core.io.ClassPathResource;
 
 @PrepareForTest(ScmSyncConfigurationPlugin.class)
 public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBaseTest {
 
 	private ScmSyncConfigurationBusiness sscBusiness;
 	private ScmSyncConfigurationItemListener sscItemListener;
+	private ScmSyncConfigurationSaveableListener sscConfigurationSaveableListener;
 	
 	protected HudsonExtensionsTest(ScmUnderTest scmUnderTest) {
 		super(scmUnderTest);
@@ -47,6 +51,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	public void initObjectsUnderTests() throws Throwable{
 		this.sscBusiness = new ScmSyncConfigurationBusiness();
 		this.sscItemListener = new ScmSyncConfigurationItemListener();
+		this.sscConfigurationSaveableListener = new ScmSyncConfigurationSaveableListener();
 
 		// Mocking ScmSyncConfigurationPlugin.getStrategyForSaveable()
 		ScmSyncConfigurationPlugin sscPlugin = spy(ScmSyncConfigurationPlugin.getInstance());
@@ -74,6 +79,36 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobRenameBeCorrectlyImpactedOnSCM/");
 	}
 	
+	@Test
+	public void shouldJobAddBeCorrectlyImpactedOnSCM() throws Throwable {
+		// Initializing the repository...
+		SCM mockedSCM = createSCMMock();
+		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
+		sscBusiness.init(scmContext);
+		
+		// Synchronizing hudson config files
+		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
+		
+		File jobDirectory = new File(getCurrentHudsonRootDirectory() + "/jobs/newFakeJob/" );
+		File configFile = new File(jobDirectory.getAbsolutePath() + File.separator + "config.xml");
+		jobDirectory.mkdir();
+		FileUtils.copyFile(new ClassPathResource("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobAddBeCorrectlyImpactedOnSCM/jobs/newFakeJob/config.xml").getFile(), configFile);
+		
+		// Creating fake new job
+		Item mockedItem = Mockito.mock(Job.class);
+		when(mockedItem.getRootDir()).thenReturn(jobDirectory);
+		
+		sscItemListener.onCreated(mockedItem);
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
+		
+		Item mockedItem2 = Mockito.mock(Job.class);
+		when(mockedItem2.getRootDir()).thenReturn(configFile);
+		sscConfigurationSaveableListener.onChange(mockedItem2, new XmlFile(configFile));
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobAddBeCorrectlyImpactedOnSCM/");
+	}
+
 	@Test
 	public void shouldJobRenameDoesntPerformAnyScmUpdate() throws Throwable {
 		// Initializing the repository...
@@ -108,7 +143,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		assertThat(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/jobs/hello.txt").exists(), is(false));
 		assertThat(new File(this.getCurrentScmSyncConfigurationCheckoutDirectory()+"/hello2.txt").exists(), is(false));
 	}
-	
+
 	@Test
 	public void shouldJobDeleteBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
