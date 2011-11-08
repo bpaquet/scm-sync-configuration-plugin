@@ -137,6 +137,34 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	}
 
 	@Test
+	public void shouldConfigModificationBeCorrectlyImpactedOnSCM() throws Throwable {
+		// Initializing the repository...
+		SCM mockedSCM = createSCMMock();
+		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
+		sscBusiness.init(scmContext);
+		
+		// Synchronizing hudson config files
+		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
+		
+		File configFile = new File(getCurrentHudsonRootDirectory() + "/hudson.tasks.Shell.xml" );
+		
+		// Creating fake new job
+		Item mockedItem = Mockito.mock(Item.class);
+		when(mockedItem.getRootDir()).thenReturn(configFile);
+		
+		sscItemListener.onCreated(mockedItem);
+		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
+		
+		FileUtils.copyFile(new ClassPathResource("expected-scm-hierarchies/HudsonExtensionsTest.shouldConfigModificationBeCorrectlyImpactedOnSCM/hudson.tasks.Shell.xml").getFile(), configFile);
+		
+		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldConfigModificationBeCorrectlyImpactedOnSCM/");
+	}
+
+	@Test
 	public void shouldJobRenameDoesntPerformAnyScmUpdate() throws Throwable {
 		// Initializing the repository...
 		SCM mockedSCM = createSCMMock();
