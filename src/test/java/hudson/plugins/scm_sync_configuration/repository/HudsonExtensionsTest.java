@@ -216,7 +216,30 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		
 		sscItemListener.onDeleted(mockedItem);
 		
-		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobDeleteBeCorrectlyImpactedOnSCM/");
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobDeleteBeCorrectlyImpactedOnSCM" + getSuffixForTestFiles() + "/");
+	}
+	
+	@Test
+	public void shouldJobDeleteWithTwoJobsBeCorrectlyImpactedOnSCM() throws Throwable {
+		String newFakeJob = "expected-scm-hierarchies/HudsonExtensionsTest.shouldJobDeleteWithTwoJobsBeCorrectlyImpactedOnSCM/jobs/newFakeJob";
+		FileUtils.copyDirectoryStructure(new ClassPathResource(newFakeJob).getFile(), new File(getCurrentHudsonRootDirectory() + File.separator + "jobs" + File.separator + "newFakeJob"));
+		
+		// Initializing the repository...
+		SCM mockedSCM = createSCMMock();
+		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
+		sscBusiness.init(scmContext);
+		
+		// Synchronizing hudson config files
+		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
+		
+		// Deleting fakeJob
+		Item mockedItem = Mockito.mock(Job.class);
+		File mockedItemRootDir = new File(getCurrentHudsonRootDirectory() + "/jobs/fakeJob/" );
+		when(mockedItem.getRootDir()).thenReturn(mockedItemRootDir);
+		
+		sscItemListener.onDeleted(mockedItem);
+		
+		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldJobDeleteWithTwoJobsBeCorrectlyImpactedOnSCM/");
 	}
 
 	@Test

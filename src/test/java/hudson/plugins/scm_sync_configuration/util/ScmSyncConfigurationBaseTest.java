@@ -38,11 +38,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.objenesis.ObjenesisStd;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.core.io.ClassPathResource;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({ "org.tmatesoft.svn.*" })
 @PrepareForTest({Hudson.class, SCM.class, ScmSyncSubversionSCM.class, PluginWrapper.class})
 public abstract class ScmSyncConfigurationBaseTest {
 	
@@ -176,6 +178,10 @@ public abstract class ScmSyncConfigurationBaseTest {
 		}};
 	}
 
+	protected String getSuffixForTestFiles() {
+		return scmUnderTest.getSuffixForTestFiles();
+	}
+	
 	// Overridable in a near future (when dealing with multiple scms ...)
 	protected Class<? extends SCM> getSCMClass(){
 		return scmUnderTest.getClazz();

@@ -105,18 +105,9 @@ public class SCMManipulator {
 		File enclosingDirectory = hierarchyToDelete.getParentFile();
 		
 		LOGGER.fine("Deleting SCM hierarchy ["+hierarchyToDelete.getAbsolutePath()+"] from SCM ...");
-		ScmFileSet updateFileSet = null;
-		ScmFileSet commitFileSet = null;
-		try {
-			updateFileSet = new ScmFileSet(enclosingDirectory, directoryName);
-			commitFileSet = new ScmFileSet(enclosingDirectory, directoryName);
-		}catch(IOException e){
-			LOGGER.throwing(ScmFileSet.class.getName(), "<init>", e);
-			LOGGER.severe("[deleteHierarchy] Hierarchy deletion aborted : "+e.getMessage());
-			return deleteOk;
-		}
 		
 		try {
+			ScmFileSet updateFileSet = new ScmFileSet(enclosingDirectory, directoryName);
 			// FIXME : CRITICAL !! It could be lead to problems when 2-way synchronization will occur in the plugin !
 			// Here we MUST make an update to make scm delete work...
 			// But generally, we should NOT force an update here (update should ONLY come from
@@ -133,17 +124,26 @@ public class SCMManipulator {
 				LOGGER.severe("[deleteHierarchy] Problem during remove : "+removeResult.getProviderMessage());
 				return deleteOk;
 			}
+			File commitFile = hierarchyToDelete;
+			while(! commitFile.isDirectory()) {
+				commitFile = commitFile.getParentFile();
+			}
+			ScmFileSet commitFileSet = new ScmFileSet(commitFile);
 			CheckInScmResult checkInResult = this.scmManager.checkIn(this.scmRepository, commitFileSet, commitMessage);
 			if(!checkInResult.isSuccess()){
 				LOGGER.severe("[deleteHierarchy] Problem during checkin : "+checkInResult.getProviderMessage());
 				return deleteOk;
 			}
-			updateResult = this.scmManager.update(this.scmRepository, updateFileSet);
+			updateResult = this.scmManager.update(this.scmRepository, commitFileSet);
 			if(!updateResult.isSuccess()){
 				LOGGER.severe("[deleteHierarchy] Problem during second update : "+updateResult.getProviderMessage());
 				return deleteOk;
 			}
 			deleteOk = true;
+		} catch (IOException e) {
+			LOGGER.throwing(ScmManager.class.getName(), "<init>", e);
+			LOGGER.severe("[deleteHierarchy] Hierarchy deletion aborted : "+e.getMessage());
+			return deleteOk;
 		} catch (ScmException e) {
 			LOGGER.throwing(ScmManager.class.getName(), "remove", e);
 			LOGGER.severe("[deleteHierarchy] Hierarchy deletion aborted : "+e.getMessage());
@@ -294,10 +294,4 @@ public class SCMManipulator {
 		return checkinOk;
 	}
 	
-	private static File createTmpDir() throws IOException {
-	    final File temp = File.createTempFile("tmp", Long.toString(System.nanoTime()));
-	    if(!(temp.delete())) { throw new IOException("Could not delete temp file: " + temp.getAbsolutePath()); }
-	    if(!(temp.mkdir())) { throw new IOException("Could not create temp directory: " + temp.getAbsolutePath()); }
-	    return (temp);
-	}
 }

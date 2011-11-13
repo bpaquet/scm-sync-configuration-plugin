@@ -21,7 +21,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 @PrepareForTest(SCM.class)
 public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseTest {
 
-	private ScmSyncConfigurationBusiness sscBusiness;
+	protected ScmSyncConfigurationBusiness sscBusiness;
 	
 	protected InitRepositoryTest(ScmUnderTest scmUnderTest) {
 		super(scmUnderTest);
@@ -46,14 +46,6 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 		emptyContext = new ScmContext(mockedSCM, null);
 		sscBusiness.init(emptyContext);
 		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(emptyContext), is(false));
-	}
-	
-	@Test
-	public void shouldInitializeLocalRepositoryWhenScmContextIsCorrect() throws Throwable {
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
-		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(scmContext), is(true));
 	}
 	
 	@Test

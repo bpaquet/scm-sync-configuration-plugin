@@ -65,7 +65,7 @@ public class ScmSyncConfigurationBusiness {
 	}
 	
 	public void cleanChekoutScmDirectory(){
-		if(checkoutScmDirectory.exists()){
+		if(checkoutScmDirectory != null && checkoutScmDirectory.exists()){
 			LOGGER.info("Deleting old checkout SCM directory ...");
 			try {
 				FileUtils.forceDelete(checkoutScmDirectory);

@@ -25,4 +25,8 @@ public class ScmUnderTestSubversion implements ScmUnderTest {
 		return true;
 	}
 
+	public String getSuffixForTestFiles() {
+		return ".subversion";
+	}
+
 }

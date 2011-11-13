@@ -13,5 +13,7 @@ public interface ScmUnderTest {
 	Class<? extends SCM> getClazz();
 	
 	boolean useCredentials();
+
+	String getSuffixForTestFiles();
 	
 }
