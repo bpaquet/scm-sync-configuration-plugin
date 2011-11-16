@@ -23,7 +23,6 @@ import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.AccessDeniedException;
-import org.jinterop.dcom.test.SysInfoEvents;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -39,7 +38,8 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 	private String scmRepositoryUrl;
 	private SCM scm;
 	private boolean noUserCommitMessage;
-
+	private boolean displayStatus;
+	
 	public ScmSyncConfigurationPlugin(){
 		setBusiness(new ScmSyncConfigurationBusiness());
 	}
@@ -69,6 +69,7 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		this.scmRepositoryUrl = pojo.getScmRepositoryUrl();
 		this.scm = pojo.getScm();
 		this.noUserCommitMessage = pojo.isNoUserCommitMessage();
+		this.displayStatus = pojo.isDisplayStatus();
 	}
 	
 	public void init() {
@@ -93,6 +94,7 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		String scmType = req.getParameter("scm");
 		if(scmType != null){
 			this.noUserCommitMessage = formData.containsKey("noUserCommitMessage");
+			this.displayStatus = formData.containsKey("displayStatus");
 			
 			this.scm = SCM.valueOf(scmType);
 			String newScmRepositoryUrl = this.scm.createScmUrlFromRequest(req);
@@ -209,6 +211,11 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		this.business = business;
 	}
 
+	
+	public ScmSyncConfigurationStatusManager getScmSyncConfigurationStatusManager() {
+		return business.getScmSyncConfigurationStatusManager();
+	}
+
 	public String getScmRepositoryUrl() {
 		return scmRepositoryUrl;
 	}
@@ -227,6 +234,10 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 		} else {
 			return null;
 		}
+	}
+	
+	public boolean isDisplayStatus() {
+		return displayStatus;
 	}
 	
 	public Descriptor<? extends hudson.scm.SCM> getDescriptorForSCM(String scmName){

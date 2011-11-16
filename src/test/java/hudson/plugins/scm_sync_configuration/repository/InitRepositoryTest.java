@@ -20,8 +20,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 @PrepareForTest(SCM.class)
 public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseTest {
-
-	protected ScmSyncConfigurationBusiness sscBusiness;
 	
 	protected InitRepositoryTest(ScmUnderTest scmUnderTest) {
 		super(scmUnderTest);
@@ -92,5 +90,20 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
 		
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
+		
+		assertStatusManagerIsOk();
 	}
+	
+	@Test
+	public void shouldInitializeLocalRepositoryWhenScmContextIsCorrect()
+			throws Throwable {
+		SCM mockedSCM = createSCMMock();
+		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
+		sscBusiness.init(scmContext);
+		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(scmContext),
+				is(true));
+		
+		assertStatusManagerIsOk();
+	}
+
 }

@@ -26,10 +26,18 @@ public class ScmSyncConfigurationBusiness {
     private boolean checkoutSucceeded;
 	private SCMManipulator scmManipulator;
 	private File checkoutScmDirectory = null;
+	private ScmSyncConfigurationStatusManager scmSyncConfigurationStatusManager = null;
 	
 	public ScmSyncConfigurationBusiness(){
 	}
 	
+	public ScmSyncConfigurationStatusManager getScmSyncConfigurationStatusManager() {
+		if (scmSyncConfigurationStatusManager == null) {
+			scmSyncConfigurationStatusManager = new ScmSyncConfigurationStatusManager();
+		}
+		return scmSyncConfigurationStatusManager;
+	}
+
 	public void init(ScmContext scmContext) throws ComponentLookupException, PlexusContainerException {
 		ScmManager scmManager = SCMManagerFactory.getInstance().createScmManager();
 		this.scmManipulator = new SCMManipulator(scmManager);
@@ -61,6 +69,7 @@ public class ScmSyncConfigurationBusiness {
 			if(this.checkoutSucceeded){
 				LOGGER.info("SCM repository initialization done.");
 			}
+			log("Checkout " + this.checkoutScmDirectory, this.checkoutSucceeded);
 		}
 	}
 	
@@ -74,6 +83,7 @@ public class ScmSyncConfigurationBusiness {
 				LOGGER.severe("Error while deleting ["+checkoutScmDirectory.getAbsolutePath()+"] : "+e.getMessage());
 			}
 			this.checkoutSucceeded = false;
+			log("Cleaning " + this.checkoutScmDirectory, this.checkoutSucceeded);
 		}
 	}
 	
@@ -89,7 +99,8 @@ public class ScmSyncConfigurationBusiness {
 		String rootHierarchyPathRelativeToHudsonRoot = JenkinsFilesHelper.buildPathRelativeToHudsonRoot(rootHierarchy);
 		File rootHierarchyTranslatedInScm = new File(getCheckoutScmDirectoryAbsolutePath()+File.separator+rootHierarchyPathRelativeToHudsonRoot);
 		
-		scmManipulator.deleteHierarchy(rootHierarchyTranslatedInScm, commitMessage);
+		log("Delete " + rootHierarchy.getAbsolutePath(),
+				scmManipulator.deleteHierarchy(rootHierarchyTranslatedInScm, commitMessage));
 	}
 	
 	public void renameHierarchy(ScmContext scmContext, File oldDir, File newDir, User user){
@@ -104,13 +115,16 @@ public class ScmSyncConfigurationBusiness {
 		
 		LOGGER.info("Renaming hierarchy ["+oldDirPathRelativeToHudsonRoot+"] to ["+newDirPathRelativeToHudsonRoot+"]");
 		
-		this.scmManipulator.renameHierarchy(scmRoot, oldDirPathRelativeToHudsonRoot, newDirPathRelativeToHudsonRoot, commitMessage);
+		log("Rename " + oldDir.getAbsolutePath() + " to " + newDir.getAbsolutePath(),
+				this.scmManipulator.renameHierarchy(scmRoot, oldDirPathRelativeToHudsonRoot, newDirPathRelativeToHudsonRoot, commitMessage));
 	}
 	
 	public void synchronizeFile(ScmContext scmContext, File modifiedFile, String comment, User user){
 		if(scmManipulator == null || !scmManipulator.scmConfigurationSettledUp(scmContext, false)){
 			return;
 		}
+		
+		String message = "Synchronize file " + modifiedFile.getAbsolutePath();
 		
 		String modifiedFilePathRelativeToHudsonRoot = JenkinsFilesHelper.buildPathRelativeToHudsonRoot(modifiedFile);
 		LOGGER.info("Synchronizing file ["+modifiedFilePathRelativeToHudsonRoot+"] to SCM ...");
@@ -123,7 +137,7 @@ public class ScmSyncConfigurationBusiness {
 		} catch (IOException e) {
 			LOGGER.throwing(FileUtils.class.getName(), "copyFile", e);
 			LOGGER.severe("Error while copying file : "+e.getMessage());
-			return;
+			log(message, false);
 		}
 
 		File scmRoot = new File(getCheckoutScmDirectoryAbsolutePath());
@@ -136,9 +150,13 @@ public class ScmSyncConfigurationBusiness {
 			synchronizedFiles.add(new File(modifiedFilePathRelativeToHudsonRoot));
 		}
 
-		if(this.scmManipulator.checkinFiles(scmRoot, synchronizedFiles, commitMessage)){
+		boolean result = this.scmManipulator.checkinFiles(scmRoot, synchronizedFiles, commitMessage);
+		
+		if(result){
 			LOGGER.info("Synchronized file ["+modifiedFilePathRelativeToHudsonRoot+"] to SCM !");
 		}
+		
+		log(message, result);
 	}
 	
 	public void synchronizeAllConfigs(ScmContext scmContext, ScmSyncStrategy[] availableStrategies, User user){
@@ -164,6 +182,15 @@ public class ScmSyncConfigurationBusiness {
 	public boolean scmCheckoutDirectorySettledUp(ScmContext scmContext){
 		return scmManipulator != null && this.scmManipulator.scmConfigurationSettledUp(scmContext, false) && this.checkoutSucceeded;
 	}
+
+	private void log(String operation, boolean result) {
+		if (result) {
+			getScmSyncConfigurationStatusManager().signalSuccess();
+		}
+		else {
+			getScmSyncConfigurationStatusManager().signalFailed(operation);
+		}
+	}
 	
 	private static String createCommitMessage(String messagePrefix, User user, String comment){
 		StringBuilder commitMessage = new StringBuilder();
@@ -180,4 +207,5 @@ public class ScmSyncConfigurationBusiness {
 	private static String getCheckoutScmDirectoryAbsolutePath(){
 		return Hudson.getInstance().getRootDir().getAbsolutePath()+WORKING_DIRECTORY_PATH+CHECKOUT_SCM_DIRECTORY;
 	}
+	
 }

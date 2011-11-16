@@ -13,4 +13,7 @@ public interface ScmSyncConfigurationPOJO {
 	public void setScm(SCM scm);
 	public boolean isNoUserCommitMessage();
 	public void setNoUserCommitMessage(boolean noUserCommitMessage);
+	public boolean isDisplayStatus();
+	public void setDisplayStatus(boolean displayStatus);
+	
 }
