@@ -10,6 +10,7 @@ import hudson.model.Hudson;
 import hudson.model.User;
 import hudson.plugins.scm_sync_configuration.SCMManagerFactory;
 import hudson.plugins.scm_sync_configuration.SCMManipulator;
+import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationBusiness;
 import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationPlugin;
 import hudson.plugins.scm_sync_configuration.model.ScmContext;
 import hudson.plugins.scm_sync_configuration.scms.SCM;
@@ -52,11 +53,14 @@ public abstract class ScmSyncConfigurationBaseTest {
 	private File currentTestDirectory = null;
 	private File curentLocalRepository = null;
 	private File currentHudsonRootDirectory = null;
+	protected ScmSyncConfigurationBusiness sscBusiness = null;
+	protected ScmContext scmContext = null;
 	
 	private ScmUnderTest scmUnderTest;
 	
 	protected ScmSyncConfigurationBaseTest(ScmUnderTest scmUnderTest) {
 		this.scmUnderTest = scmUnderTest;
+		this.scmContext = null;
 	}
 	
 	@Before
@@ -73,6 +77,10 @@ public abstract class ScmSyncConfigurationBaseTest {
 		wrapperField.setAccessible(true);
 		wrapperField.set(scmSyncConfigPluginInstance, pluginWrapper);
 		wrapperField.setAccessible(wrapperFieldAccessibility);
+		
+		Field businessField = ScmSyncConfigurationPlugin.class.getDeclaredField("business");
+		businessField.setAccessible(true);
+		sscBusiness = (ScmSyncConfigurationBusiness) businessField.get(scmSyncConfigPluginInstance); 
 
 		// Mocking Hudson root directory
 		currentTestDirectory = createTmpDirectory("SCMSyncConfigTestsRoot");
@@ -124,7 +132,10 @@ public abstract class ScmSyncConfigurationBaseTest {
 	}
 	
 	protected SCM createSCMMock(){
-		
+		return createSCMMock(getSCMRepositoryURL());
+	}
+	
+	protected SCM createSCMMock(String url){
 		SCM mockedSCM = spy(SCM.valueOf(getSCMClass().getName()));
 		
 		if(scmUnderTest.useCredentials()){
@@ -132,9 +143,10 @@ public abstract class ScmSyncConfigurationBaseTest {
 			PowerMockito.doReturn(mockedCredential).when(mockedSCM).extractScmCredentials((String)Mockito.notNull());
 		}
 		
+		scmContext = new ScmContext(mockedSCM, url);
 		ScmSyncConfigurationPOJO config = new DefaultSSCPOJO();
-		config.setScm(mockedSCM);
-		config.setScmRepositoryUrl(getSCMRepositoryURL());
+		config.setScm(scmContext.getScm());
+		config.setScmRepositoryUrl(scmContext.getScmRepositoryUrl());
 		ScmSyncConfigurationPlugin.getInstance().loadData(config);
 		ScmSyncConfigurationPlugin.getInstance().init();
 		
@@ -143,8 +155,6 @@ public abstract class ScmSyncConfigurationBaseTest {
 
 	protected SCMManipulator createMockedScmManipulator() throws ComponentLookupException, PlexusContainerException{
 		// Settling up scm context
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
 		SCMManipulator scmManipulator = new SCMManipulator(SCMManagerFactory.getInstance().createScmManager());
 		boolean configSettledUp = scmManipulator.scmConfigurationSettledUp(scmContext, true);
 		assertThat(configSettledUp, is(true));

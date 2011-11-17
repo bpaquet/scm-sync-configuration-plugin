@@ -16,8 +16,6 @@ import hudson.plugins.scm_sync_configuration.SCMManipulator;
 import hudson.plugins.scm_sync_configuration.ScmSyncConfigurationPlugin;
 import hudson.plugins.scm_sync_configuration.extensions.ScmSyncConfigurationItemListener;
 import hudson.plugins.scm_sync_configuration.extensions.ScmSyncConfigurationSaveableListener;
-import hudson.plugins.scm_sync_configuration.model.ScmContext;
-import hudson.plugins.scm_sync_configuration.scms.SCM;
 import hudson.plugins.scm_sync_configuration.strategies.ScmSyncStrategy;
 import hudson.plugins.scm_sync_configuration.strategies.impl.JenkinsConfigScmSyncStrategy;
 import hudson.plugins.scm_sync_configuration.strategies.impl.JobConfigScmSyncStrategy;
@@ -59,9 +57,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldJobRenameBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -81,9 +77,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldJobAddBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -111,9 +105,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldJobModificationBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -142,9 +134,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldConfigModificationBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -172,9 +162,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldJobRenameDoesntPerformAnyScmUpdate() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -190,7 +178,6 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		scmManipulator.addFile(checkoutDirectoryForVerifications, "jobs/hello.txt");
 		scmManipulator.addFile(checkoutDirectoryForVerifications, "hello2.txt");
 		scmManipulator.checkinFiles(checkoutDirectoryForVerifications, new ArrayList<File>(){{ add(hello1); add(hello2); }}, "external commit");
-
 		
 		// Renaming fakeJob to newFakeJob
 		Item mockedItem = Mockito.mock(Item.class);
@@ -209,9 +196,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldJobDeleteBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -234,9 +219,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		FileUtils.copyDirectoryStructure(new ClassPathResource(newFakeJob).getFile(), new File(getCurrentHudsonRootDirectory() + File.separator + "jobs" + File.separator + "newFakeJob"));
 		
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -256,9 +239,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	@Test
 	public void shouldJobDeleteDoesntPerformAnyScmUpdate() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -274,7 +255,6 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		scmManipulator.addFile(checkoutDirectoryForVerifications, "jobs/hello.txt");
 		scmManipulator.addFile(checkoutDirectoryForVerifications, "hello2.txt");
 		scmManipulator.checkinFiles(checkoutDirectoryForVerifications, new ArrayList<File>(){{ add(hello1); add(hello2); }}, "external commit");
-
 		
 		// Deleting fakeJob
 		Item mockedItem = Mockito.mock(Item.class);

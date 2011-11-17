@@ -24,11 +24,6 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 	protected InitRepositoryTest(ScmUnderTest scmUnderTest) {
 		super(scmUnderTest);
 	}
-
-	@Before
-	public void initBusiness() throws Throwable{
-		this.sscBusiness = new ScmSyncConfigurationBusiness();
-	}
 	
 	@Test
 	public void shouldNotInitializeAnyRepositoryWhenScmContextIsEmpty() throws Throwable {
@@ -40,27 +35,21 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 		sscBusiness.init(emptyContext);
 		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(emptyContext), is(false));
 		
-		SCM mockedSCM = createSCMMock();
-		emptyContext = new ScmContext(mockedSCM, null);
-		sscBusiness.init(emptyContext);
+		createSCMMock(null);
 		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(emptyContext), is(false));
 	}
 	
 	@Test
 	@Ignore("Not yet implemented ! (it is difficult because svn list/log has not yet been implemented in svnjava impl")
 	public void shouldInitializeLocalRepositoryWhenScmContextIsCorrentAndEvenIfScmDirectoryDoesntExist() throws Throwable {
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL()+"/path/that/doesnt/exist/");
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(scmContext), is(true));
 	}
 	
 	@Test
 	public void shouldResetCheckoutConfigurationDirectoryWhenAsked() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// After init, local checkouted repository should exists
 		assertThat(getCurrentScmSyncConfigurationCheckoutDirectory().exists(), is(true));
@@ -82,9 +71,7 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 	@Test
 	public void shouldSynchronizeHudsonFiles() throws Throwable {
 		// Initializing the repository...
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
+		createSCMMock();
 		
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
@@ -97,11 +84,8 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 	@Test
 	public void shouldInitializeLocalRepositoryWhenScmContextIsCorrect()
 			throws Throwable {
-		SCM mockedSCM = createSCMMock();
-		ScmContext scmContext = new ScmContext(mockedSCM, getSCMRepositoryURL());
-		sscBusiness.init(scmContext);
-		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(scmContext),
-				is(true));
+		createSCMMock();
+		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(scmContext), is(true));
 		
 		assertStatusManagerIsOk();
 	}

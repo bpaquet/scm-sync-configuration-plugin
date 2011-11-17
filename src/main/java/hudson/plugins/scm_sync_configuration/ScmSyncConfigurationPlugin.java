@@ -34,7 +34,7 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 			new JenkinsConfigScmSyncStrategy()
 	};
 	
-	transient private ScmSyncConfigurationBusiness business;
+	private transient ScmSyncConfigurationBusiness business;
 	private String scmRepositoryUrl;
 	private SCM scm;
 	private boolean noUserCommitMessage;
