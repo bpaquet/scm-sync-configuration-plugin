@@ -37,6 +37,8 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 		
 		createSCMMock(null);
 		assertThat(sscBusiness.scmCheckoutDirectorySettledUp(emptyContext), is(false));
+		
+		assertStatusManagerIsNull();
 	}
 	
 	@Test
@@ -66,6 +68,8 @@ public abstract class InitRepositoryTest extends ScmSyncConfigurationPluginBaseT
 		// Reseting the repository with cleanup
 		sscBusiness.initializeRepository(scmContext, true);
 		assertThat(fileWhichShouldBeDeletedAfterReset.exists(), is(false));
+		
+		assertStatusManagerIsOk();
 	}
 	
 	@Test

@@ -29,9 +29,12 @@ public class ScmSyncConfigurationPluginBaseTest extends
 	}
 
 	protected void assertStatusManagerIsOk() {
-		assertThat(sscBusiness.getScmSyncConfigurationStatusManager()
-				.getLastFail(), nullValue());
-		assertThat(sscBusiness.getScmSyncConfigurationStatusManager()
-				.getLastSuccess(), notNullValue());
+		assertThat(sscBusiness.getScmSyncConfigurationStatusManager().getLastFail(), nullValue());
+		assertThat(sscBusiness.getScmSyncConfigurationStatusManager().getLastSuccess(), notNullValue());
+	}
+	
+	protected void assertStatusManagerIsNull() {
+		assertThat(sscBusiness.getScmSyncConfigurationStatusManager().getLastFail(), nullValue());
+		assertThat(sscBusiness.getScmSyncConfigurationStatusManager().getLastSuccess(), nullValue());
 	}
 }
