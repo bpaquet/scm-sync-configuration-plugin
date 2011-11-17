@@ -83,7 +83,6 @@ public class ScmSyncConfigurationBusiness {
 				LOGGER.severe("Error while deleting ["+checkoutScmDirectory.getAbsolutePath()+"] : "+e.getMessage());
 			}
 			this.checkoutSucceeded = false;
-			log("Cleaning " + this.checkoutScmDirectory, this.checkoutSucceeded);
 		}
 	}
 	
