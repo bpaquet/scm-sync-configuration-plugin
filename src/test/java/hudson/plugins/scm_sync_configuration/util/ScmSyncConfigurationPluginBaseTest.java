@@ -37,4 +37,5 @@ public class ScmSyncConfigurationPluginBaseTest extends
 		assertThat(sscBusiness.getScmSyncConfigurationStatusManager().getLastFail(), nullValue());
 		assertThat(sscBusiness.getScmSyncConfigurationStatusManager().getLastSuccess(), nullValue());
 	}
+
 }

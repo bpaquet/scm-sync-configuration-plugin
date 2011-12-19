@@ -118,6 +118,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		when(mockedItem.getRootDir()).thenReturn(jobDirectory);
 		
 		sscItemListener.onCreated(mockedItem);
+
 		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
 		
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
@@ -135,27 +136,27 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 	public void shouldConfigModificationBeCorrectlyImpactedOnSCM() throws Throwable {
 		// Initializing the repository...
 		createSCMMock();
-		
+
 		// Synchronizing hudson config files
 		sscBusiness.synchronizeAllConfigs(scmContext, ScmSyncConfigurationPlugin.AVAILABLE_STRATEGIES, Hudson.getInstance().getMe());
-		
+
 		File configFile = new File(getCurrentHudsonRootDirectory() + "/hudson.tasks.Shell.xml" );
-		
+
 		// Creating fake new job
 		Item mockedItem = Mockito.mock(Item.class);
 		when(mockedItem.getRootDir()).thenReturn(configFile);
-		
+
 		sscItemListener.onCreated(mockedItem);
 		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
-		
+
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/InitRepositoryTest.shouldSynchronizeHudsonFiles/");
-		
+
 		FileUtils.copyFile(new ClassPathResource("expected-scm-hierarchies/HudsonExtensionsTest.shouldConfigModificationBeCorrectlyImpactedOnSCM/hudson.tasks.Shell.xml").getFile(), configFile);
-		
+
 		sscConfigurationSaveableListener.onChange(mockedItem, new XmlFile(configFile));
-		
+
 		verifyCurrentScmContentMatchesHierarchy("expected-scm-hierarchies/HudsonExtensionsTest.shouldConfigModificationBeCorrectlyImpactedOnSCM/");
-		
+
 		assertStatusManagerIsOk();
 	}
 
@@ -212,7 +213,7 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		
 		assertStatusManagerIsOk();
 	}
-	
+		
 	@Test
 	public void shouldJobDeleteWithTwoJobsBeCorrectlyImpactedOnSCM() throws Throwable {
 		String newFakeJob = "expected-scm-hierarchies/HudsonExtensionsTest.shouldJobDeleteWithTwoJobsBeCorrectlyImpactedOnSCM/jobs/newFakeJob";
@@ -270,17 +271,6 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		assertStatusManagerIsOk();
 	}
 
-	private void assertStrategy(Class<? extends ScmSyncStrategy> clazz, Saveable object, String relativePath) {
-		ScmSyncStrategy strategy = ScmSyncConfigurationPlugin.getInstance().getStrategyForSaveable(object, new File(getCurrentHudsonRootDirectory() + File.separator + relativePath));
-		if (clazz == null) {
-			assertThat(strategy, nullValue());
-		}
-		else {
-			assertThat(strategy, notNullValue());
-			assertThat(strategy, instanceOf(clazz));
-		}
-	}
-	
 	@Test
 	public void shouldFileWhichHaveToBeInSCM() throws Throwable {
 		assertStrategy(JenkinsConfigScmSyncStrategy.class, Mockito.mock(Saveable.class), "config.xml");
@@ -295,4 +285,16 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 		assertStrategy(JobConfigScmSyncStrategy.class, Mockito.mock(Job.class), "jobs" + File.separator + "myJob" + File.separator + "config.xml");
 		assertStrategy(null, Mockito.mock(Job.class), "jobs" + File.separator + "myJob" + File.separator + "config2.xml");
 	}
+
+	private void assertStrategy(Class<? extends ScmSyncStrategy> clazz, Saveable object, String relativePath) {
+		ScmSyncStrategy strategy = ScmSyncConfigurationPlugin.getInstance().getStrategyForSaveable(object, new File(getCurrentHudsonRootDirectory() + File.separator + relativePath));
+		if (clazz == null) {
+			assertThat(strategy, nullValue());
+		}
+		else {
+			assertThat(strategy, notNullValue());
+			assertThat(strategy, instanceOf(clazz));
+		}
+	}
+	
 }
